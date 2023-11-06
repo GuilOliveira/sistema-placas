@@ -9,13 +9,15 @@ const PDFDocument = require('pdfkit');
 require('dotenv').config();
 
 const router = express.Router();
-
+// Armazenamento do multer para imagens
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
+// Configuração da api ocr
 const ocrApiUrl = 'https://api.ocr.space/parse/image';
 const apiKey = process.env.API_KEY;
 
+// Configuração da conexão com o mongo
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri, {
   serverApi: {
@@ -25,18 +27,23 @@ const client = new MongoClient(uri, {
   }
 });
 
+// Rota de cadastro de placas
 router.post('/cadastroPlaca', verificarJWT, upload.single('image'), async (req, res) => {
   try {
+    // Checa se o arquivo é um png
     if (!req.file || req.file.mimetype !== 'image/png') {
       return res.status(400).json({ error: 'Apenas arquivos no formato png.' });
     }
 
+    // Salva a data atual
     const currentDate = new Date();
     const dataHora = new Date(currentDate.getTime() - (3 * 60 * 60 * 1000));
     const dataAtual = dataHora.toISOString().split('T')[0]; 
     const horaAtual = dataHora.toISOString().split('T')[1].split('.')[0]; 
     let dados; 
-    // Consumindo a API
+
+    // CONSUMINDO A API OCR
+    // Configurando a engine da api
     const form = new formData();
     form.append('file', req.file.buffer, {
       filename: 'image.png',
@@ -47,6 +54,7 @@ router.post('/cadastroPlaca', verificarJWT, upload.single('image'), async (req, 
     form.append('OCREngine', '1');
     form.append('filetype', 'png');
 
+    // Configurando o header com a api_key
     let options = {
       headers: {
           'apikey': apiKey,
@@ -76,23 +84,25 @@ router.post('/cadastroPlaca', verificarJWT, upload.single('image'), async (req, 
     } finally {
       await client.close();
     }
-
+    // Informa que a operação foi bem sucedida e informa o objeto inserido
     res.status(200).json(dados)
   } catch (error) {
     res.status(500).json({ error: 'Ocorreu um erro!' });
   }
 });
 
+// Rota do relatório das placas
 router.get('/relatorio/cidade/:cidade', verificarJWT, async (req, res) => {
   const cidade = req.params.cidade;
   try {
     let registros;
+    // Busca no banco de dados as placas da cidade buscada
     try{
       await client.connect();
       const collection = client.db("database").collection("placas");
       
       registros = await collection.find({ cidade }).toArray();
-
+    // Caso não haja nenhum registro, retorna um erro
       if (registros.length === 0) {
         return res.status(404).json({ error: 'Nenhum registro encontrado para a cidade especificada.' });
       }
@@ -100,11 +110,13 @@ router.get('/relatorio/cidade/:cidade', verificarJWT, async (req, res) => {
       await client.close();
     }
 
+    // Cria o documento PDF do relatório
     const doc = new PDFDocument();
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=relatorio_${cidade}.pdf`);
     doc.pipe(res);
 
+    // Formatação e inserção de dados no relátório
     doc.fontSize(18).text(`Relatório de Placas - Cidade: ${cidade}`, { align: 'center' });
     doc.moveDown();
 
@@ -121,9 +133,11 @@ router.get('/relatorio/cidade/:cidade', verificarJWT, async (req, res) => {
     res.status(500).json({ error: 'Ocorreu um erro ao gerar o relatório.' });
 }});
 
+// Rota de consulta 
 router.get('/consulta/:placa', verificarJWT, async(req, res) => {
   try{
     let placa = req.params.placa;
+    // Busca se existe algum registro com a placa informada no banco de dados
     try {
       await client.connect();
       const collection = client.db("database").collection("placas");
@@ -131,6 +145,8 @@ router.get('/consulta/:placa', verificarJWT, async(req, res) => {
     } finally {
       await client.close();
     }
+
+    // Caso exista, retorna o objeto, caso não, retorna um erro 404
     if (placa) {
       res.json({ placa: placa });
     } else {
@@ -140,10 +156,5 @@ router.get('/consulta/:placa', verificarJWT, async(req, res) => {
       res.status(500).json({ error: 'Ocorreu um erro ao consultar a placa.' });
     }
 });
-
-router.get('/teste', verificarJWT, async(req, res) => {
-    return res.json("ola mundo")
-});
-
 
 module.exports = router;
