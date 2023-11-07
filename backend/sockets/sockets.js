@@ -2,6 +2,7 @@ const socketIo = require('socket.io');
 const socketioJwt = require('socketio-jwt');
 
 module.exports = (server) => {
+  // Configuração CORS
     const io = socketIo(server, {
         cors: {
           origin: '*',
@@ -10,24 +11,19 @@ module.exports = (server) => {
           credentials: true,
         },
       });
-  
+  // Fazendo autenticação da conexão
       io.use(socketioJwt.authorize({
         secret: process.env.SECRET_KEY,
         handshake: true
       }));
   
     io.on('connection', (socket) => {
-      console.log('Novo cliente conectado:');
-      
       socket.on('authentication_failed', (data) => {
-        // Handle authentication failure as needed
       });
-    
+      // Caso receba o alerta, emite o alerta aos demais usuários
       socket.on('alerta', (mensagem) => {
         socket.emit('alerta', mensagem);
-        // Handle the alert logic
       });
-    
       socket.on('disconnect', () => {
       });
     });

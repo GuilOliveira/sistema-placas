@@ -7,11 +7,11 @@ require('dotenv').config();
 const bodyParser = require('body-parser');
 
 const router = express.Router();
+router.use(bodyParser.urlencoded({extended: true}))
 
 const secretKey = process.env.SECRET_KEY;
 
-router.use(bodyParser.urlencoded({extended: true}))
-
+// Configuração da conexão com o mongo
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri, {
   serverApi: {
@@ -21,9 +21,11 @@ const client = new MongoClient(uri, {
   }
 });
 
+// Rota de cadastro de usuários
 router.post('/cadastro', async (req, res) => {
   const { nome, senha } = req.body;
   try {
+    // Criptografa a senha
     const salt = bcrypt.genSaltSync(10);
     const senhaParaSalvar = bcrypt.hashSync(senha, salt);
     console.log(senhaParaSalvar)
@@ -50,31 +52,30 @@ router.post('/cadastro', async (req, res) => {
   }
 });
 
-
+// Rota de login de usuário
 router.post('/login', async (req, res) => {
   try {
+    // Checa se existe o usuário cadastrado no banco de dados
     const {nome, senha} = req.body
     const usuario = await checarUsuario(nome);
+
+    // Se não, retorna um erro
     if (usuario == null) {
       res.status(500).json({ error: 'Usuário ou senha errados' });
       return;
     }
+
+    // Compara se a senha criptografada é igual a informada
     const r = bcrypt.compareSync(senha, usuario.senha)
     if (r){
+    // Se sim fornece um token para o login
       let token = jwt.sign({usuario}, secretKey, {expiresIn: 9000})
       res.status(200).json({ Sucesso: 'Logado com sucesso!' , Token: token });
+    // Se não, retorna erro
     }else{
       res.status(500).json({ error: 'Usuário ou senha errados' });
     }
     
-  } catch (error) {
-    res.status(500).json({ error: 'Ocorreu um erro!' });
-  }
-});
-
-router.get('/teste', async (req, res) => {
-  try {
-    res.status(200).json({ Sucesso: 'Usuário cadastrado' });
   } catch (error) {
     res.status(500).json({ error: 'Ocorreu um erro!' });
   }

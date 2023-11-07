@@ -2,6 +2,7 @@ const { log } = require('console');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 require('dotenv').config();
 
+// Configuração da conexão com o mongo
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri, {
   serverApi: {
@@ -9,7 +10,7 @@ const client = new MongoClient(uri, {
     strict: true,
     deprecationErrors: true,
   }})
-
+// A função checa se o usuário existe no bd, caso sim, o retorna. Caso não, retorna nulo
 async function checarUsuario (x) {
     let usuario = null
     try {

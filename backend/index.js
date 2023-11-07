@@ -2,27 +2,26 @@ const express = require('express');
 const http = require('http');
 const createSocket = require('./sockets/sockets');
 const cors = require('cors');
+
+// Configuração base do express e CORS
 const app = express();
 app.use(cors());
 app.use(express.urlencoded({extended: true}))
 app.use(express.json());
 
-const placaRota = require('./rotas/placa'); // Importa as rotas da placas
+// Importação de rotas
+const placaRota = require('./rotas/placa'); 
 const usuarioRota = require('./rotas/usuario');
 const alertaRota = require('./rotas/alerta')
 
- // Permite o uso de JSON no corpo das requisições
-app.get('/api', (req, res) => {
-  res.send('Hello');
-});
-
-// Todas as rotas de alunos começam com 'api/placas/'
+// Definição de rotas
 app.use('/api/placas', placaRota);
 app.use('/api/usuario', usuarioRota);
 app.use('/api/alerta', alertaRota);
 
-const PORT = 8080; // Você pode escolher uma porta diferente se necessário
+const PORT = 8080;
 
+// Definição do servidor do socket.io
 const server = http.createServer(app);
 const io = createSocket(server);
 app.set('socketio', io);
