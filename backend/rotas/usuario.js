@@ -23,7 +23,7 @@ const client = new MongoClient(uri, {
 
 // Rota de cadastro de usuários
 router.post('/cadastro', async (req, res) => {
-  const { nome, senha } = req.body;
+  const { email, senha } = req.body;
   try {
     // Criptografa a senha
     const salt = bcrypt.genSaltSync(10);
@@ -31,7 +31,7 @@ router.post('/cadastro', async (req, res) => {
     console.log(senhaParaSalvar)
     // Tente verificar se o usuário já existe
     
-    const usuario = await checarUsuario(nome);
+    const usuario = await checarUsuario(email);
     if (usuario != null) {
       res.status(500).json({ error: 'Usuário já cadastrado' });
       return;
@@ -41,13 +41,12 @@ router.post('/cadastro', async (req, res) => {
     try {
       await client.connect();
       const collection = client.db("database").collection("usuarios");
-      await collection.insertOne({login: nome, senha: senhaParaSalvar});
+      await collection.insertOne({login: email, senha: senhaParaSalvar});
     } finally {
       await client.close();
     }
     res.status(200).json({ Sucesso: 'Usuário cadastrado' });
   } catch (error) {
-    console.error("Erro geral:", error);
     res.status(500).json({ erro: 'Erro geral' });
   }
 });
@@ -56,8 +55,8 @@ router.post('/cadastro', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     // Checa se existe o usuário cadastrado no banco de dados
-    const {nome, senha} = req.body
-    const usuario = await checarUsuario(nome);
+    const {email, senha} = req.body
+    const usuario = await checarUsuario(email);
 
     // Se não, retorna um erro
     if (usuario == null) {

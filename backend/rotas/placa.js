@@ -1,10 +1,10 @@
 const express = require('express');
 const multer = require('multer');
 const axios = require('axios');
-const verificarJWT = require('../middlewares/verificarJWT.js')
 const formData = require('form-data');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const extrairPlaca = require('../utils/extrairPlaca.js');
+const verificarJWT = require('../middlewares/verificarJWT.js')
 const PDFDocument = require('pdfkit');
 require('dotenv').config();
 
@@ -92,7 +92,7 @@ router.post('/cadastroPlaca', verificarJWT, upload.single('image'), async (req, 
 });
 
 // Rota do relatório das placas
-router.get('/relatorio/cidade/:cidade', verificarJWT, async (req, res) => {
+router.get('/relatorio/cidade/:cidade', async (req, res) => {
   const cidade = req.params.cidade;
   try {
     let registros;

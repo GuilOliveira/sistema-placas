@@ -6,13 +6,13 @@ const cors = require('cors');
 // Configuração base do express e CORS
 const app = express();
 app.use(cors());
-app.use(express.urlencoded({extended: true}))
+app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 
 // Importação de rotas
 const placaRota = require('./rotas/placa'); 
 const usuarioRota = require('./rotas/usuario');
-const alertaRota = require('./rotas/alerta')
+const alertaRota = require('./rotas/alerta');
 
 // Definição de rotas
 app.use('/api/placas', placaRota);
